@@ -24,10 +24,10 @@ class CosmosService:
         self.endpoint = config.COSMOS_ENDPOINT
         self.key = config.COSMOS_KEY
         self.database_name = config.COSMOS_DATABASE_NAME
-        self.container_name = config.CURRENCY_RATE_CONTAINER
+        self.currency_rate_container_name = config.CURRENCY_RATE_CONTAINER
         
         # Validate configuration
-        if not all([self.endpoint, self.key, self.database_name, self.container_name]):
+        if not all([self.endpoint, self.key, self.database_name, self.currency_rate_container_name]):
             raise ValueError("Missing required Cosmos DB configuration")
         
         # Initialize Cosmos client
@@ -44,9 +44,9 @@ class CosmosService:
             self.database = self.client.get_database_client(self.database_name)
             
             # Get container reference
-            self.container = self.database.get_container_client(self.container_name)
+            self.container = self.database.get_container_client(self.currency_rate_container_name)
             
-            self.logger.info(f"Successfully connected to Cosmos DB: {self.database_name}/{self.container_name}")
+            self.logger.info(f"Successfully connected to Cosmos DB: {self.database_name}/{self.currency_rate_container_name}")
             
         except CosmosResourceNotFoundError as e:
             self.logger.error(f"Database or container not found: {str(e)}")
@@ -153,6 +153,132 @@ class CosmosService:
             
         except Exception as e:
             self.logger.error(f"Error updating currency rates in Cosmos DB: {str(e)}")
+            raise
+    
+    def get_current_rates_from_cosmos(self) -> Dict[str, Any]:
+        """
+        Retrieve the current currency rates from Cosmos DB.
+        
+        Returns:
+            Dict: The currency rate data from Cosmos DB
+            
+        Raises:
+            CosmosResourceNotFoundError: If no rates are found
+            Exception: For other errors
+        """
+        try:
+            self.logger.info("Fetching currency rates from Cosmos DB")
+            
+            # Query for items (should be only one)
+            query = "SELECT * FROM c"
+            items = list(self.container.query_items(
+                query=query,
+                enable_cross_partition_query=True
+            ))
+            
+            if not items:
+                raise CosmosResourceNotFoundError("No currency rate data found in Cosmos DB")
+            
+            if len(items) > 1:
+                self.logger.warning(f"Found {len(items)} items in container, expected 1")
+            
+            # Return the first (and should be only) item
+            rate_item = items[0]
+            self.logger.info(f"Retrieved currency rates from Cosmos DB. Last update: {rate_item.get('time_last_update_utc', 'Unknown')}")
+            
+            return rate_item
+            
+        except CosmosResourceNotFoundError:
+            self.logger.warning("No currency rate data found in Cosmos DB")
+            raise
+        except Exception as e:
+            self.logger.error(f"Error retrieving currency rates from Cosmos DB: {str(e)}")
+            raise
+    
+    def get_conversion_rate(self, from_currency: str, to_currency: str) -> float:
+        """
+        Get a specific conversion rate between two currencies from Cosmos DB.
+        
+        Args:
+            from_currency: Source currency code
+            to_currency: Target currency code
+            
+        Returns:
+            float: Exchange rate from source to target currency
+            
+        Raises:
+            ValueError: If currencies are not found
+            Exception: For other errors
+        """
+        try:
+            # Get current rates from Cosmos DB
+            rate_data = self.get_current_rates_from_cosmos()
+            conversion_rates = rate_data.get("conversion_rates", {})
+            
+            from_currency = from_currency.upper()
+            to_currency = to_currency.upper()
+            
+            if from_currency not in conversion_rates:
+                raise ValueError(f"Currency {from_currency} not found in stored rates")
+            
+            if to_currency not in conversion_rates:
+                raise ValueError(f"Currency {to_currency} not found in stored rates")
+            
+            # Calculate the exchange rate
+            from_rate = conversion_rates[from_currency]
+            to_rate = conversion_rates[to_currency]
+            
+            # Convert through base currency (usually USD)
+            exchange_rate = to_rate / from_rate
+            
+            self.logger.info(f"Conversion rate {from_currency} to {to_currency}: {exchange_rate}")
+            
+            return exchange_rate
+            
+        except Exception as e:
+            self.logger.error(f"Error getting conversion rate {from_currency} to {to_currency}: {str(e)}")
+            raise
+    
+    def get_rates(self) -> Dict[str, Any]:
+        """
+        Get the currency rates from Cosmos DB.
+        
+        Fetches the only item present in the currency rate container and returns it as-is.
+        
+        Returns:
+            Dict: The currency rate data from Cosmos DB as stored
+            
+        Raises:
+            CosmosResourceNotFoundError: If no rates are found
+            Exception: For other errors
+        """
+        try:
+            self.logger.info("Fetching currency rates from Cosmos DB")
+            
+            # Query for items (should be only one)
+            query = "SELECT * FROM c"
+            items = list(self.container.query_items(
+                query=query,
+                enable_cross_partition_query=True
+            ))
+            
+            if not items:
+                raise CosmosResourceNotFoundError("No currency rate data found in Cosmos DB")
+            
+            if len(items) > 1:
+                self.logger.warning(f"Found {len(items)} items in container, expected 1")
+            
+            # Return the first (and should be only) item as-is
+            rate_item = items[0]
+            self.logger.info(f"Retrieved currency rates from Cosmos DB. Last update: {rate_item.get('time_last_update_utc', 'Unknown')}")
+            
+            return rate_item
+            
+        except CosmosResourceNotFoundError:
+            self.logger.warning("No currency rate data found in Cosmos DB")
+            raise
+        except Exception as e:
+            self.logger.error(f"Error retrieving currency rates from Cosmos DB: {str(e)}")
             raise
 
 
