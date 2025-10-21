@@ -1,9 +1,10 @@
 # Core LangGraph and LangChain dependencies
 langgraph>=0.2.0
+langchain
 langchain-core>=0.3.0
 langchain-openai>=0.2.0
 langchain_core
-
+langchain_community
 # HTTP requests for external API calls
 requests>=2.31.0
 
@@ -13,21 +14,10 @@ typing-extensions>=4.8.0
 # Environment variable management
 python-dotenv>=1.0.0
 
-# Azure OpenAI specific dependencies (already included in langchain-openai)
-# azure-identity>=1.15.0  # Optional: for managed identity authentication
-# azure-core>=1.29.0      # Optional: for Azure SDK core functionality
+applicationinsights
 
-# Optional: Enhanced development experience
-# pytest>=7.4.0           # For testing
-# black>=23.0.0            # Code formatting
-# flake8>=6.0.0            # Linting
-# mypy>=1.7.0              # Type checking
+fastapi
+uvicorn
 
-# Optional: Production deployment
-# uvicorn>=0.23.0          # ASGI server
-# fastapi>=0.104.0         # REST API framework
-# gunicorn>=21.2.0         # WSGI server for production
-
-# Optional: Logging and monitoring
-# structlog>=23.2.0        # Structured logging
-# prometheus-client>=0.19.0 # Metrics collection
+sqlalchemy
+pyodbc

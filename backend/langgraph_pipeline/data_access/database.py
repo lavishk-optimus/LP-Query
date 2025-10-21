@@ -1,0 +1,80 @@
+from sqlalchemy.engine.url import URL
+from langchain_community.utilities import SQLDatabase
+
+from config import (
+    SQL_SERVER_USERNAME,
+    SQL_SERVER_NAME,
+    SQL_SERVER_PASSWORD,
+    SQL_SERVER_DATABASE
+)
+
+from langgraph_pipeline.services.telemetry_client import telemetry_client 
+
+
+class Database:
+    """
+    Database class to handle SQL Server connections using environment variables.
+    """
+
+    def __init__(self):
+        """Initialize the database connection."""
+        self.db = None
+        try: 
+            self.db_config = self._get_db_config()
+            self.db_url = URL.create(**self.db_config)
+            self.db = self._create_connection()
+
+            if not self.db:
+                raise Exception("Failed to establish database connection")
+
+            telemetry_client.log_info("Initialized the database connection.")
+
+        except Exception as e:
+            telemetry_client.log_exception(e, {"error": f"Database Connection failed because of {e}"})
+            raise
+
+    def _get_db_config(self):
+        """Retrieves database configuration from environment variables."""
+
+        return {
+            "drivername": "mssql+pyodbc",
+            "username": SQL_SERVER_USERNAME,
+            "password": SQL_SERVER_PASSWORD,
+            "host": SQL_SERVER_NAME, 
+            "port": 1433,  
+            "database": SQL_SERVER_DATABASE,
+            "query": {
+                "driver": "ODBC Driver 17 for SQL Server",
+                "TrustServerCertificate": "yes",
+                "Encrypt": "yes",
+            },
+        }
+
+    def _create_connection(self):
+        '''Creates a SQLDatabase instance from the connection URL and verifies the connection.'''
+        try:
+            db = SQLDatabase.from_uri(self.db_url)
+
+            test_query = 'SELECT @@VERSION'
+            result = db.run(test_query)
+
+            if result:
+                telemetry_client.log_info(f'✅ Database connection successful! SQL Server Version: {result}')
+                return db
+            else:
+                telemetry_client.log_warning('⚠️ Connected but unable to fetch SQL Server version!')
+                return db
+        
+        except Exception as e:
+            telemetry_client.log_exception(e, {"error": "Database: Failed to create SQL connection"})
+            raise Exception(f"Failed to connect to database: {str(e)}")
+
+    def get_db(self):
+        '''Returns the database connection.'''
+        if not hasattr(self, 'db') or not self.db:
+            raise Exception("Database connection not initialized or failed to connect")
+        return self.db
+
+
+# Singleton instance
+database = Database()
