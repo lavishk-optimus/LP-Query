@@ -5,7 +5,10 @@ __pycache__/
 .Python
 build/
 
+# Ignore environment files
 .env
+backend/.env
+
 .venv
 env/
 venv/
