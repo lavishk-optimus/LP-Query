@@ -15,7 +15,7 @@ venv/
 ENV/
 
 .vscode/
-
+lpquery.egg-info/
 *.log
 .toml
 *.db
