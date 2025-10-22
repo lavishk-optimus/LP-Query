@@ -1,0 +1,46 @@
+# Core web framework dependencies
+fastapi
+uvicorn[standard]
+pydantic
+
+# File upload and form handling
+python-multipart
+
+# Azure dependencies
+azure-cosmos
+
+# LLM dependencies (Azure OpenAI)
+openai
+
+# Document processing dependencies
+python-docx
+lxml
+
+# Date and time utilities
+python-dateutil
+
+# HTTP client for external API calls
+httpx
+
+# JSON handling and validation
+typing-extensions
+
+# Logging and monitoring
+structlog
+
+# Environment variable management
+python-dotenv
+
+# Data validation and parsing
+email-validator
+
+# Development and testing dependencies
+pytest
+pytest-asyncio
+pytest-httpx
+black
+isort
+flake8
+
+# Production server (optional)
+gunicorn
