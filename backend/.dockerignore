@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+
+# Virtual Environment
+.venv
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Logs
+*.log
+logs/
+
+# Local development
+local_settings.py
+
+# Test coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Documentation
+docs/
+*.md
+
+# Dependencies
+node_modules/
+
+# Misc
+.DS_Store
+Thumbs.db

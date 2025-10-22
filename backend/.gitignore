@@ -1,0 +1,36 @@
+# Ignore environment configuration files
+credentials.env
+.env
+
+# Ignore compiled Python files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+venv/
+.env/
+*.venv/
+*.venv*
+
+# Ignore logs and output files
+logs/
+*.log
+*.out
+*.err
+
+# Ignore database and system files
+*.sqlite3
+*.db
+.DS_Store
+
+# Ignore IDE/editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore cloud-specific credentials
+.azure/
+.azureml/
