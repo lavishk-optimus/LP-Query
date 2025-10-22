@@ -1,7 +1,6 @@
 import os
-
-# Load environment variables from credentials.env for local development
 from dotenv import load_dotenv
+from typing import Optional
 load_dotenv()
 
 # SQL Server Configuration
@@ -25,7 +24,9 @@ AZURE_COSMOSDB_SESSION_CONTAINER_NAME = os.getenv('AZURE_COSMOSDB_SESSION_CONTAI
 AZURE_COSMOSDB_CONVERSATION_CONTAINER_NAME = os.getenv('AZURE_COSMOSDB_CONVERSATION_CONTAINER_NAME')
 AZURE_COSMOSDB_CONNECTION_STRING = os.getenv('AZURE_COSMOSDB_CONNECTION_STRING')
 AZURE_COSMOSDB_PARTITION_KEY = os.getenv('AZURE_COSMOSDB_PARTITION_KEY')
-NG = os.getenv('AZURE_COSMOSDB_USER_CERTIFICATION_MAPPING')
+COSMOS_FUND_CONTAINER: str = os.getenv("COSMOS_FUND_CONTAINER", "funds")
+COSMOS_LATEST_FUND_MAPPING_CONTAINER: str = os.getenv("COSMOS_LATEST_FUND_MAPPING_CONTAINER", "latest_fund_mapping")
+
 # Application Insights Configuration
 APP_INSIGHTS_CONNECTION_STRING = os.getenv('APP_INSIGHTS_CONNECTION_STRING')
 

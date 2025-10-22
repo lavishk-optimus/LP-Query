@@ -1,41 +1,64 @@
-    # FastAPI and ASGI Server
-    fastapi == 0.115.12
-    fastapi-utils == 0.8.0
-    uvicorn == 0.34.0
+# FastAPI and ASGI Server
+fastapi == 0.115.12
+fastapi-utils == 0.8.0
+uvicorn == 0.34.0
+python-multipart
 
-    # Environment Variables Management
-    python-dotenv == 1.1.0
+# Environment Variables Management
+python-dotenv == 1.1.0
 
-    # Data Validation and Parsing
-    pydantic == 2.10.6
-    pydantic-settings == 2.8.1
+# Data Validation and Parsing
+pydantic == 2.10.6
+pydantic-settings == 2.8.1
+typing-extensions
+email-validator
 
-    # OpenAI Integration
-    openai == 1.69.0
+# OpenAI Integration
+openai == 1.69.0
 
-    # Azure Services
-    azure-identity == 1.21.0
-    azure-core == 1.32.0
-    azure-cosmos == 4.9.0
-    azure-ai-translation-text == 1.0.1
-    azure-mgmt-applicationinsights == 4.1.0
-    applicationinsights == 0.11.10
-    opencensus-ext-azure == 1.1.13
+# Azure Services
+azure-identity == 1.21.0
+azure-core == 1.32.0
+azure-cosmos == 4.9.0
+azure-ai-translation-text == 1.0.1
+azure-mgmt-applicationinsights == 4.1.0
+applicationinsights == 0.11.10
+opencensus-ext-azure == 1.1.13
+azure-search-documents == 11.4.0b7
 
+# LangChain and LangGraph
+langchain == 0.3.21
+langgraph == 0.3.21
+langchain-experimental == 0.3.4
+langchain-community == 0.3.20
+langchain-openai == 0.3.11
 
-    azure-search-documents == 11.4.0b7
+# Database Connectivity
+sqlalchemy == 2.0.40
+pyodbc == 5.2.0
 
-    # LangChain and LangGraph
-    langchain == 0.3.21
-    langgraph == 0.3.21
-    langchain-experimental == 0.3.4
-    langchain-community == 0.3.20
-    langchain-openai == 0.3.11
+# HTTP Requests
+requests == 2.32.3
+aiohttp == 3.12.3
+httpx
 
-    # Database Connectivity
-    sqlalchemy == 2.0.40
-    pyodbc == 5.2.0
+# Document processing dependencies
+python-docx
+lxml
 
-    # HTTP Requests
-    requests == 2.32.3
-    aiohttp == 3.12.3  # Added for async HTTP requests
+# Date and time utilities
+python-dateutil
+
+# Logging and monitoring
+structlog
+
+# Development and testing dependencies
+pytest
+pytest-asyncio
+pytest-httpx
+black
+isort
+flake8
+
+# Production server
+gunicorn
