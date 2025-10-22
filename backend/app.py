@@ -1,14 +1,32 @@
+import logging
+import os
+import uuid
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from langgraph_pipeline.agents.sql_agent import sql_agent_singleton_instance
-from typing import Optional
-
+from typing import List, Optional
+from azure.cosmos import CosmosClient
+from dotenv import load_dotenv
+load_dotenv()
 app = FastAPI(title="SQL Query API")
+
+cosmos_conn = os.getenv("cdblpqueryccprod01_DOCUMENTDB")
+cosmos_client = CosmosClient.from_connection_string(cosmos_conn)
+database = cosmos_client.get_database_client("lpquery")
+container = database.get_container_client("alert_preferences")
 
 class QueryRequest(BaseModel):
     """Request model for natural language query"""
     query: str
     user_id: Optional[str] = "default_user"
+
+class AlertPreference(BaseModel):
+    user_id: str = Field(..., example="test123")
+    alert_type: str = Field(default="NAV", example="IRR")    
+    threshold_type: str = Field(default="Above", example="Above")  
+    threshold_value: float = Field(default=5, example=5)
+    funds: List[str] = Field(..., example=["Harbor Growth Fund III", "Equity Alpha"])
+    frequency: str = Field(default="immediate", example="immediate")     
 
 @app.get("/")
 def health_check():
@@ -26,11 +44,11 @@ async def query_database(request: QueryRequest):
         }
     """
     try:
-        # Call SQL agent with the query
+      
         response = await sql_agent_singleton_instance.get_response(
             user_query=request.query,
             user_id=request.user_id,
-            modules=[]  # Empty list since we're not using modules for this endpoint
+            modules=[]  
         )
         
         return response
@@ -39,4 +57,35 @@ async def query_database(request: QueryRequest):
             status_code=500,
             detail=f"Error processing query: {str(e)}"
         )
+
+@app.post("/alert-preferences")
+def store_alert_preferences(pref: AlertPreference):
+    """
+    Store user alert preferences in Cosmos DB.
+    """
+    try:
+        if not pref.user_id or not pref.funds:
+            raise HTTPException(status_code=400, detail="'user_id' and 'funds' are required.")
+
+        alert_id = f"alert_{pref.user_id}_{uuid.uuid4().hex[:6]}"
+
+        doc = {
+            "id": alert_id,
+            "user_id": pref.user_id,
+            "alert_type": pref.alert_type,
+            "threshold_type": pref.threshold_type,
+            "threshold_value": pref.threshold_value,
+            "funds": pref.funds,
+            "frequency": pref.frequency
+        }
+
+        container.upsert_item(doc)
+
+        logging.info(f"✅ Alert preferences saved successfully for user {pref.user_id}")
+
+        return {"message": f"✅ Alert preferences saved successfully for user {pref.user_id}"}
+
+    except Exception as e:
+        logging.error(f"Error saving alert preferences: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
