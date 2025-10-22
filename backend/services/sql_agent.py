@@ -1,5 +1,5 @@
 from utils.prompts import SQL_AGENT_SYSTEM_PROMPT, SQL_AGENT_CONTEXT_TEMPLATE
-from services.llm_service import llm_service
+from services.llm_services import llm_service_singleton_instance
 from data_access.database import database
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.prebuilt import create_react_agent
@@ -14,7 +14,7 @@ class SQLAgent:
         self.telemetry_client = telemetry_client
 
         try:
-            self.llm = llm_service.get_llm()
+            self.llm = llm_service_singleton_instance.get_llm()
             self.k = k
             self.callbacks = callbacks
 

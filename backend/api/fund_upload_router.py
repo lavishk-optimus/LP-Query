@@ -3,7 +3,6 @@ from fastapi.responses import JSONResponse
 import logging
 from typing import List, Dict, Any
 import io
-
 from services import WordParserService, LLMService, CosmosService
 from models import Fund, FundResponseDTO
 

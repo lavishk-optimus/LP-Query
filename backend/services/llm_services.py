@@ -27,4 +27,4 @@ class LLMService:
         return self.llm
 
 # Singleton instance
-llm_service = LLMService()
+llm_service_singleton_instance = LLMService()

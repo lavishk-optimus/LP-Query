@@ -6,7 +6,7 @@ from config import AZURE_COSMOSDB_ENDPOINT, AZURE_COSMOSDB_NAME, AZURE_COSMOSDB_
 from models.state import Message, State
 import copy
 from services.sql_agent import sql_agent_singleton_instance
-from services.llm_service import llm_service
+from services.llm_services import llm_service_singleton_instance
 from utils.prompts import INITIAL_PROMPT_TEMPLATE
 from constants import CONTEXT_LIMIT
 from langgraph.graph import StateGraph
@@ -20,7 +20,7 @@ class QueryOrchestrator:
     def __init__(self):
         '''Initialize Query Orchestrator with LLM, SQL Agent, and precompile the workflow.'''
 
-        self.llm = llm_service.get_llm()
+        self.llm = llm_service_singleton_instance.get_llm()
         self.sql_agent = sql_agent_singleton_instance
         self.supportive_response_agent = supportive_response_agent_singleton_instance
         self.rejection_response_agent = rejection_response_agent_singleton_instance

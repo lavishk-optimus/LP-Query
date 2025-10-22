@@ -8,7 +8,6 @@ try:
 except ImportError:
     AzureOpenAI = None
 
-from config import config
 
 
 logger = logging.getLogger(__name__)

@@ -1,4 +1,4 @@
-from services.llm_service import llm_service
+from services.llm_services import llm_service_singleton_instance
 from utils.prompts import SUPPORTIVE_RESPONSE_AGENT_PROMPT
 from services.telemetry_client import telemetry_client
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -7,7 +7,7 @@ import json
 
 class SupportiveResponseAgent:
     def __init__(self):
-        self.llm = llm_service.get_llm()
+        self.llm = llm_service_singleton_instance.get_llm()
         self.telemetry_client = telemetry_client
 
     async def get_response(self, user_query: str, messages: list = None) -> dict:
