@@ -22,6 +22,7 @@ class QueryRequest(BaseModel):
 
 class AlertPreference(BaseModel):
     user_id: str = Field(..., example="test123")
+    user_email: Optional[str] = Field(None, example="user@example.com")
     alert_type: str = Field(default="NAV", example="IRR")    
     threshold_type: str = Field(default="Above", example="Above")  
     threshold_value: float = Field(default=5, example=5)
@@ -67,11 +68,12 @@ def store_alert_preferences(pref: AlertPreference):
         if not pref.user_id or not pref.funds:
             raise HTTPException(status_code=400, detail="'user_id' and 'funds' are required.")
 
-        alert_id = f"alert_{pref.user_id}_{uuid.uuid4().hex[:6]}"
+        alert_id = f"alert_{pref.user_id}_{str(uuid.uuid4())}"
 
         doc = {
             "id": alert_id,
             "user_id": pref.user_id,
+            "user_email": pref.user_email,
             "alert_type": pref.alert_type,
             "threshold_type": pref.threshold_type,
             "threshold_value": pref.threshold_value,
