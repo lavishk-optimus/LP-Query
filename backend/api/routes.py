@@ -54,12 +54,6 @@ async def execute_query(query: Query):
                 item=session,
                 partition_key=session["user_id"]
             )
-
-            return ApiResponse(
-                success=True,
-                data=[{"response": "WELCOME CARD REQUIRED"}],
-                status_code=200
-            ).response()
  
         message = HumanMessage(content=query.question)
         state = State(
