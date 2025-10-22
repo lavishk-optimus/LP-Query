@@ -101,8 +101,7 @@ class LLMService:
                     {"role": "system", "content": FUND_EXTRACTION_SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.1,  # Low temperature for consistent extraction
-                response_format={"type": "json_object"} if self._supports_json_mode() else None
+                temperature=0.3,  # Low temperature for consistent extraction
             )
             
             # Extract and parse response

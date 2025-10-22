@@ -6,7 +6,7 @@ from functions.exchange_currency import exchange_currency, get_supported_currenc
 
 app = func.FunctionApp()
 
-@app.schedule(schedule="0 0 0 * * *", arg_name="myTimer", run_on_startup=False,
+@app.schedule(schedule="0 0 0 * * *", arg_name="myTimer", run_on_startup=True,
               use_monitor=False) 
 def update_currency_rates(myTimer: func.TimerRequest) -> None:
     """
