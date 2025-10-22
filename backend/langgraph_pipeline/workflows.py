@@ -1,145 +1,80 @@
-# from langgraph.graph import StateGraph, END
-# from langgraph.prebuilt import ToolNode
-# from typing_extensions import TypedDict
-# from typing import Annotated, List
-# from langchain_core.messages import BaseMessage
-# from langgraph.graph.message import add_messages
-
-# from nodes import agent_node, should_continue
-# from tools import ALL_TOOLS
-
-# class MessagesState(TypedDict):
-#     messages: Annotated[List[BaseMessage], add_messages]
-
-
-# class Workflow_class:
-
-#     # @staticmethod
-#     def create_multi_turn_workflow():
-#         """Create a simple multi-turn workflow."""
-#         workflow = StateGraph(MessagesState)
-        
-#         # Add nodes
-#         workflow.add_node("agent", agent_node)
-#         workflow.add_node("tools", ToolNode(ALL_TOOLS))
-        
-#         # Set entry point and edges
-#         workflow.set_entry_point("agent")
-#         workflow.add_conditional_edges("agent", should_continue, {"tools": "tools", "END": END})
-#         workflow.add_edge("tools", "agent")
-        
-#         return workflow.compile()
-
-# # def create_streaming_workflow():
-# #     """Create a workflow optimized for streaming responses."""
-# #     return create_multi_turn_workflow()  # Same workflow, but we'll use .stream() method
-
-
-
-
-
-
-from langgraph.graph import StateGraph, END
-from langgraph.prebuilt import ToolNode
 from typing_extensions import TypedDict
 from typing import Annotated, List, Optional
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, AIMessage, HumanMessage
 from langgraph.graph.message import add_messages
+from langgraph.graph import StateGraph, END
 import threading
 import logging
+from .services.telemetry_client import telemetry_client
+from .nodes import process_query
 
-from .nodes import agent_node, should_continue
-from .tools import ALL_TOOLS
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging
 logger = logging.getLogger(__name__)
 
 class MessagesState(TypedDict):
     messages: Annotated[List[BaseMessage], add_messages]
 
-class WorkflowSingleton:
-    """Singleton class for workflow management"""
+class WorkflowManager:
+    """Singleton class for managing the query workflow"""
     
-    _instance: Optional['WorkflowSingleton'] = None
+    _instance: Optional['WorkflowManager'] = None
     _lock = threading.Lock()
-    _workflow = None
     _initialized = False
     
     def __new__(cls):
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
-                    cls._instance = super(WorkflowSingleton, cls).__new__(cls)
+                    cls._instance = super(WorkflowManager, cls).__new__(cls)
         return cls._instance
     
     def __init__(self):
-        # Only initialize once
         if not self._initialized:
             with self._lock:
                 if not self._initialized:
                     try:
-                        logger.info("Initializing workflow singleton...")
-                        self._workflow = self._create_workflow()
+                        logger.info("Initializing workflow manager...")
                         self._initialized = True
-                        logger.info("Workflow singleton initialized successfully")
+                        logger.info("Workflow manager initialized successfully")
                     except Exception as e:
-                        logger.error(f"Failed to initialize workflow: {e}")
+                        logger.error(f"Failed to initialize workflow manager: {e}")
                         raise RuntimeError(f"Workflow initialization failed: {e}")
     
-    def _create_workflow(self):
-        """Create the workflow graph"""
+    async def process_query(self, query: str) -> dict:
+        """
+        Process a user query through the workflow
+        """
         try:
-            workflow = StateGraph(MessagesState)
+            telemetry_client.log_info(f"Processing query: {query[:50]}...")
             
-            # Add nodes
-            workflow.add_node("agent", agent_node)
-            workflow.add_node("tools", ToolNode(ALL_TOOLS))
+            # Create initial state with the query using HumanMessage
+            state = {"messages": [HumanMessage(content=query)]}
             
-            # Set entry point and edges
-            workflow.set_entry_point("agent")
-            workflow.add_conditional_edges("agent", should_continue, {"tools": "tools", "END": END})
-            workflow.add_edge("tools", "agent")
+            # Process the query
+            result = await process_query(state)
             
-            return workflow.compile()
-        
+            telemetry_client.log_info("Query processed successfully")
+            return result
+            
         except Exception as e:
-            logger.error(f"Error creating workflow: {e}")
-            raise
-    
-    def get_workflow(self):
-        """Get the compiled workflow"""
-        if not self._initialized or self._workflow is None:
-            raise RuntimeError("Workflow not properly initialized")
-        return self._workflow
+            error_msg = f"Error processing query: {str(e)}"
+            telemetry_client.log_exception(e, {"error": error_msg})
+            return {"messages": [AIMessage(content=error_msg)]}
     
     def is_initialized(self) -> bool:
         """Check if workflow is initialized"""
-        return self._initialized and self._workflow is not None
-    
-    def reset(self):
-        """Reset the singleton (useful for testing or reconfiguration)"""
-        with self._lock:
-            logger.info("Resetting workflow singleton...")
-            self._workflow = None
-            self._initialized = False
-            logger.info("Workflow singleton reset")
+        return self._initialized
 
-# Global singleton instance
-workflow_singleton = WorkflowSingleton()
-
-class Workflow_class:
-    """Legacy wrapper class for backward compatibility"""
-    
-    @staticmethod
-    def create_multi_turn_workflow():
-        """Get the singleton workflow instance"""
-        return workflow_singleton.get_workflow()
+workflow_singleton = WorkflowManager()
 
 def get_workflow():
     """Factory function to get workflow instance"""
-    return workflow_singleton.get_workflow()
+    workflow = StateGraph(MessagesState)
+    workflow.add_node("process", process_query)
+    workflow.set_entry_point("process")
+    workflow.add_edge("process", END)
+    return workflow.compile()
 
-def create_streaming_workflow():
-    """Create a workflow optimized for streaming responses."""
-    return get_workflow()  # Same workflow, but we'll use .stream() method
+async def process_streaming_query(query: str):
+    """Process a query with streaming response capability"""
+    return await workflow_singleton.process_query(query)

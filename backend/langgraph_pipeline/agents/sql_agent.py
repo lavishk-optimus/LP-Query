@@ -1,6 +1,6 @@
-from Utils.Prompts import SQL_AGENT_CONTEXT_TEMPLATE, SQL_AGENT_SYSTEM_PROMPT
-from langgraph_pipeline.services.llm_service import llm_service
-from langgraph_pipeline.data_access.database import database
+from .Utils.Prompts import SQL_AGENT_CONTEXT_TEMPLATE, SQL_AGENT_SYSTEM_PROMPT
+from ..services.llm_service import llm_service
+from ..data_access.database import database
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.prebuilt import create_react_agent
 from langgraph_pipeline.services.telemetry_client import telemetry_client

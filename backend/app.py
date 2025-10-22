@@ -1,60 +1,3 @@
-# from fastapi import FastAPI, HTTPException
-# from pydantic import BaseModel
-# from langgraph_pipeline.agents.sql_agent import sql_agent_singleton_instance
-# from typing import Optional
-# from langgraph_pipeline.workflows import Workflow_class
-
-# app = FastAPI(title="SQL Query API")
-
-# class QueryRequest(BaseModel):
-#     """Request model for natural language query"""
-#     query: str
-#     user_id: Optional[str] = "default_user"
-
-# initialising=Workflow_class.create_multi_turn_workflow()
-
-# @app.get("/")
-# def health_check():
-#     return {"status": "ok"}
-
-# @app.post("/api/query")
-# async def query_database(request: QueryRequest):
-#     """
-#     Execute a natural language query against the database
-    
-#     Example request:
-#         {
-#             "query": "How many users are in the system?",
-#             "user_id": "user123"
-#         }
-#     """
-#     try:
-#         # Call SQL agent with the query
-#         response = await sql_agent_singleton_instance.get_response(
-#             user_query=request.query,
-#             user_id=request.user_id,
-#             modules=[]  # Empty list since we're not using modules for this endpoint
-#         )
-        
-#         return response
-#     except Exception as e:
-#         raise HTTPException(
-#             status_code=500,
-#             detail=f"Error processing query: {str(e)}"
-#         )
-
-# @app.post("/api/test_chat")
-# async def test_chat(request: QueryRequest):
-#     resp=initialising.invoke(
-#         {"messages": [
-#             {"role": "user", "content": "who are you?"}
-#         ]}
-#     )
-#     return {"response": resp}
-
-
-
-
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 # from langgraph_pipeline.agents.sql_agent import sql_agent_singleton_instance
@@ -63,7 +6,7 @@ from langchain_core.messages import HumanMessage
 from typing import Optional
 import logging
 
-# Set up logging
+# Set u
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -151,13 +94,8 @@ async def shutdown_event():
 async def test_chat(request: QueryRequest):
     """Test the workflow with a simple chat message"""
     try:
-        # Get the singleton workflow
-        workflow = get_workflow()
-        
-        # Create proper message format
-        response = workflow.invoke({
-            "messages": [HumanMessage(content=request.query)]
-        })
+        # Process query using workflow singleton
+        response = await workflow_singleton.process_query(request.query)
         
         # Extract the final response
         final_message = response['messages'][-1] if response.get('messages') else None
@@ -174,19 +112,4 @@ async def test_chat(request: QueryRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Error processing chat: {str(e)}"
-        )
-
-@app.post("/api/reset_workflow")
-async def reset_workflow():
-    """Reset the workflow singleton (admin endpoint)"""
-    try:
-        workflow_singleton.reset()
-        # Reinitialize
-        workflow_singleton.__init__()
-        return {"status": "Workflow reset and reinitialized successfully"}
-    except Exception as e:
-        logger.error(f"Error resetting workflow: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error resetting workflow: {str(e)}"
         )
