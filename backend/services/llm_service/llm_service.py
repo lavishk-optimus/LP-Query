@@ -2,7 +2,7 @@ import json
 import logging
 from typing import List, Dict, Any, Optional
 from .prompts import FUND_EXTRACTION_SYSTEM_PROMPT, FUND_EXTRACTION_USER_PROMPT
-
+from config import AZURE_OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_DEPLOYMENT_NAME, AZURE_OPENAI_API_VERSION  
 try:
     from openai import AzureOpenAI
 except ImportError:
@@ -35,12 +35,12 @@ class LLMService:
             if AzureOpenAI is None:
                 logger.error("openai package not installed. Install with: pip install openai>=1.35.0")
                 return False
-                
-            azure_endpoint = config.AZURE_OPENAI_ENDPOINT
-            azure_key = config.AZURE_OPENAI_KEY
-            deployment_name = config.AZURE_OPENAI_DEPLOYMENT_NAME
-            api_version = config.AZURE_OPENAI_API_VERSION
-            
+
+            azure_endpoint = AZURE_OPENAI_ENDPOINT
+            azure_key = AZURE_OPENAI_API_KEY
+            deployment_name = AZURE_OPENAI_DEPLOYMENT_NAME
+            api_version = AZURE_OPENAI_API_VERSION
+
             if not azure_endpoint:
                 logger.error("AZURE_OPENAI_ENDPOINT not configured")
                 return False
