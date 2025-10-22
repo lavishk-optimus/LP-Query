@@ -8,7 +8,6 @@ from fastapi import APIRouter
 from langgraph_pipeline.query_orchestrator import QueryOrchestrator
 from fastapi.responses import RedirectResponse
 from models.query_request_model import Query
-from models.feedback_model import FeedbackRequest
 from utils.api_response import ApiResponse
 from langchain.schema import HumanMessage
 from fastapi import Request
@@ -111,100 +110,3 @@ async def execute_query(query: Query):
             status_code=500
         ).response()
  
-@router.post("/feedbackendpoint")
-async def submit_feedback(feedback: FeedbackRequest):
-    """
-    1. Submit user feedback from adaptive card.
-    2. Likes and dislikes are stored separately along with free-text feedback.
- 
-    """
-    operation_id = f"feedback_{feedback.user_id}_{int(time.time() * 1000)}"
-    centralized_logger.start_operation(operation_id)
-    
-    try:
-        try:
-            session = await session_manager_singleton_instance.get_or_create_session(feedback.user_id)
-            session_id = session["session_id"]
-        except Exception as session_error:
-            session_id = None  
-       
-        feedback_item = {
-            "id": f'{feedback.user_id}_{int(time.time() * 1000)}',  
-            "user_id": feedback.user_id,
-            "session_id": session_id,
-            "feedbackType": feedback.feedbackType,
-            "feedbackText": feedback.feedbackText,
-        }
- 
-        await cosmos_client_singleton_instance.save_item(
-            container_type=ContainerType.FEEDBACK,
-            item=feedback_item,
-            partition_key=feedback.user_id
-        )
- 
-        centralized_logger.simple_log(operation_id, success=True, user_id=feedback.user_id, session_id=session_id)
-        return ApiResponse(
-            success=True,
-            status_code=200
-        ).response()
- 
-    except ValueError as e:
-        centralized_logger.log_validation_error(operation_id, str(e), 
-                                              user_id=feedback.user_id if hasattr(feedback, 'user_id') else 'unknown')
-        return ApiResponse(
-            success=False,
-            data=[{"error": str(e)}],
-            status_code=400
-        ).response()
-    except Exception as e:
-        centralized_logger.log_exception(operation_id, e, 
-                                        user_id=feedback.user_id if hasattr(feedback, 'user_id') else 'unknown',
-                                        error=f"Error storing feedback: {e}")
-        return ApiResponse(
-            success=False,
-            data=[{"error": "An error occurred while submitting your feedback."}],
-            status_code=500
-        ).response()
- 
-
-@router.get("/get_welcome_status")
-async def get_welcome_status(user_id: str):
-    """
-    Check if the user exists in the database.
-    Returns whether the user exists (true/false).
-    """
-    operation_id = f"get_welcome_status_{user_id}_{int(time.time() * 1000)}"
-    centralized_logger.start_operation(operation_id)
-    
-    try:
-        if not user_id or not user_id.strip():
-            raise ValueError("user_id is required and cannot be empty")
-
-        user_exists = await session_manager_singleton_instance.get_welcome_status(user_id.strip())
-
-        centralized_logger.simple_log(operation_id, success=True, user_id=user_id, user_exists=user_exists)
-        return ApiResponse(
-            success=True,
-            data=[{
-                "message": "User existence checked successfully",
-                "user_id": user_id,
-                "user_exists": user_exists
-            }],
-            status_code=200
-        ).response()
-
-    except ValueError as e:
-        centralized_logger.log_validation_error(operation_id, str(e), user_id=user_id if user_id else 'empty')
-        return ApiResponse(
-            success=False,
-            data=[{"error": str(e)}],
-            status_code=400
-        ).response()
-    except Exception as e:
-        centralized_logger.log_exception(operation_id, e, user_id=user_id if user_id else 'unknown')
-        return ApiResponse(
-            success=False,
-            data=[{"error": "An error occurred while checking user existence."}],
-            status_code=500
-        ).response()
-   

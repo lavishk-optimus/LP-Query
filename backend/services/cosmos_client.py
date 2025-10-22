@@ -17,17 +17,8 @@ from services.telemetry_client import telemetry_client
 T = TypeVar('T')
 
 class ContainerType(Enum):
-    SESSION = "sessions"
-    FEEDBACK = "feedback"  # Add this line
-    # ... other container types
-    CONVERSATION = "conversation"
-    QUIZ = "quiz"
-    EMAIL= "email"
-    AI_102 = "AI-102"
-    AZ_104 = "AZ-104"
-    AZ_305 = "AZ-305"
-    AZ_900 = "AZ-900"
-    USER_CERTIFICATION_MAPPING = "UserCertificationMapping"
+    SESSION = "session"
+    CONVERSATION = "conversation_history"
     
 
 class CosmosClientService:
