@@ -1,21 +1,32 @@
 import datetime
 import json
+import logging
+import os
+import uuid
+from models.mail_service import AlertPreference, EmailScheduleRequest
 from services.cosmos_client import cosmos_client_singleton_instance, ContainerType
 from services.session_manager import session_manager_singleton_instance
 from services.centralized_logging_service import centralized_logger
 from models.state import State
-from fastapi import APIRouter
+from fastapi import APIRouter,HTTPException
 from langgraph_pipeline.query_orchestrator import QueryOrchestrator
 from fastapi.responses import RedirectResponse
 from models.query_request_model import Query
 from utils.api_response import ApiResponse
 from langchain.schema import HumanMessage
+from azure.cosmos import CosmosClient
 from fastapi import Request
 from services.telemetry_client import telemetry_client
 import time
- 
+  
 router = APIRouter()
- 
+
+cosmos_conn = os.getenv("cdblpqueryccprod01_DOCUMENTDB")
+cosmos_client = CosmosClient.from_connection_string(cosmos_conn)
+database = cosmos_client.get_database_client("lpquery")
+container = database.get_container_client("alert_preferences")
+schedule_email_container = database.get_container_client("email_schedule")
+
 @router.get("/")
 def docs_redirect():
     return RedirectResponse(url="/docs")
@@ -104,3 +115,59 @@ async def execute_query(query: Query):
             status_code=500
         ).response()
  
+@router.post("/alert-preferences")
+def store_alert_preferences(pref: AlertPreference):
+    """
+    Store user alert preferences in Cosmos DB.
+    """
+    try:
+        if not pref.user_id or not pref.funds:
+            raise HTTPException(status_code=400, detail="'user_id' and 'funds' are required.")
+
+        alert_id = f"alert_{pref.user_id}_{str(uuid.uuid4())}"
+
+        doc = {
+            "id": alert_id,
+            "user_id": pref.user_id,
+            "user_email": pref.user_email,
+            "alert_type": pref.alert_type,
+            "threshold_type": pref.threshold_type,
+            "threshold_value": pref.threshold_value,
+            "funds": pref.funds,
+            "frequency": pref.frequency
+        }
+
+        container.upsert_item(doc)
+
+        logging.info(f"✅ Alert preferences saved successfully for user {pref.user_id}")
+
+        return {"message": f"✅ Alert preferences saved successfully for user {pref.user_id}"}
+
+    except Exception as e:
+        logging.error(f"Error saving alert preferences: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+@router.post("/schedule-email")
+async def schedule_email(req: EmailScheduleRequest):
+    # Validate date
+    try:
+        datetime.strptime(req.send_date, "%Y-%m-%d")
+    except ValueError:
+        return {"error": "Invalid date format. Use YYYY-MM-DD."}
+
+    schedule_item = {
+        "id": f"{req.user_id}-{req.send_date}",
+        "type": "schedule",
+        "user_id": req.user_id,
+        "email": req.email,
+        "send_date": req.send_date,
+        "status": "pending"
+    }
+
+    schedule_email_container.upsert_item(schedule_item)
+
+    return {
+        "message": f"Email scheduled for {req.send_date} for user {req.user_id}",
+        "data": schedule_item
+    }    
