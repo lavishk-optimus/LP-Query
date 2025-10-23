@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
-
+from api.routes import router
+import uvicorn
+from services.telemetry_client import telemetry_client
 from api import fund_upload_router
 from api import fund_data_router
 
@@ -17,6 +19,10 @@ app = FastAPI(
     description="API for processing fund documents and managing fund data",
     version="1.0.0"
 )
+telemetry_client.log_info('FastAPI instance created...')
+app.include_router(router)
+
+telemetry_client.log_info('🔗 Routes registered successfully...')
 
 # Add CORS middleware
 app.add_middleware(
@@ -40,3 +46,8 @@ async def root():
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "LP Query Backend"}
+
+
+if __name__ == '__main__':
+    telemetry_client.log_info(' Starting Uvicorn...')
+    uvicorn.run(app, host='0.0.0.0', port=8080)

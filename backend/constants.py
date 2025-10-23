@@ -1,0 +1,3 @@
+CONTEXT_LIMIT = 6
+SESSION_DURATION = 30 * 60  # 30 minutes in seconds
+RECORDS_LIMIT = 100

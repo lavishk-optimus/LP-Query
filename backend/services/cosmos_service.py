@@ -4,9 +4,8 @@ import logging
 import uuid
 from typing import Optional, Dict, Any, List
 from datetime import date
-from config import config
 from models.fund import Fund
-
+from config import AZURE_COSMOSDB_NAME, AZURE_COSMOSDB_ENDPOINT, AZURE_COSMOSDB_PRIMARY_KEY, COSMOS_FUND_CONTAINER, COSMOS_LATEST_FUND_MAPPING_CONTAINER
 
 logger = logging.getLogger(__name__)
 
@@ -16,23 +15,17 @@ class CosmosService:
     
     def __init__(self):
         """Initialize the Cosmos DB service with credentials from config"""
-        if not config.validate_cosmos_config():
-            raise ValueError(
-                "Azure Cosmos DB configuration is missing. "
-                "Please set COSMOS_ENDPOINT and COSMOS_KEY environment variables."
-            )
         
         try:
             # Initialize Cosmos client
             self.client = CosmosClient(
-                url=config.COSMOS_ENDPOINT,
-                credential=config.COSMOS_KEY
+                url=AZURE_COSMOSDB_ENDPOINT,
+                credential=AZURE_COSMOSDB_PRIMARY_KEY
             )
-            
-            self.database_name = config.COSMOS_DATABASE_NAME
-            self.fund_container_name = config.COSMOS_FUND_CONTAINER
-            self.latest_fund_mapping_container_name = config.COSMOS_LATEST_FUND_MAPPING_CONTAINER
-            
+            self.database_name = AZURE_COSMOSDB_NAME
+            self.fund_container_name = COSMOS_FUND_CONTAINER
+            self.latest_fund_mapping_container_name = COSMOS_LATEST_FUND_MAPPING_CONTAINER
+
             # Ensure database exists
             self.database = self._ensure_database_exists()
             

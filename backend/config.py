@@ -1,43 +1,41 @@
 import os
-from typing import Optional
 from dotenv import load_dotenv
-
-# Load environment variables from .env file
+from typing import Optional
 load_dotenv()
 
+# SQL Server Configuration
+SQL_SERVER_USERNAME = os.getenv('SQL_SERVER_USERNAME')
+SQL_SERVER_NAME = os.getenv('SQL_SERVER_NAME')
+SQL_SERVER_PASSWORD = os.getenv('SQL_SERVER_PASSWORD')
+SQL_SERVER_DATABASE = os.getenv('SQL_SERVER_DATABASE')
 
-class Config:
-    """Configuration class for application settings"""
-    
-    # Azure Cosmos DB Configuration
-    COSMOS_ENDPOINT: Optional[str] = os.getenv("COSMOS_ENDPOINT")
-    COSMOS_KEY: Optional[str] = os.getenv("COSMOS_KEY")
-    COSMOS_DATABASE_NAME: str = os.getenv("COSMOS_DATABASE_NAME", "lpquery")
-    
-    # Cosmos DB Containers
-    COSMOS_FUND_CONTAINER: str = os.getenv("COSMOS_FUND_CONTAINER", "funds")
-    COSMOS_LATEST_FUND_MAPPING_CONTAINER: str = os.getenv("COSMOS_LATEST_FUND_MAPPING_CONTAINER", "latest_fund_mapping")
-    
-    # Azure OpenAI Configuration (Azure AI Foundry)
-    AZURE_OPENAI_ENDPOINT: Optional[str] = os.getenv("AZURE_OPENAI_ENDPOINT")
-    AZURE_OPENAI_KEY: Optional[str] = os.getenv("AZURE_OPENAI_KEY")
-    AZURE_OPENAI_DEPLOYMENT_NAME: Optional[str] = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
-    AZURE_OPENAI_API_VERSION: str = os.getenv("AZURE_OPENAI_API_VERSION", "2024-05-01-preview")
-    
-    @classmethod
-    def validate_cosmos_config(cls) -> bool:
-        """Validate that required Cosmos DB configuration is present"""
-        return bool(cls.COSMOS_ENDPOINT and cls.COSMOS_KEY)
-    
-    @classmethod
-    def validate_azure_openai_config(cls) -> bool:
-        """Validate that Azure OpenAI (Azure AI Foundry) configuration is present"""
-        return bool(
-            cls.AZURE_OPENAI_ENDPOINT and 
-            cls.AZURE_OPENAI_KEY and 
-            cls.AZURE_OPENAI_DEPLOYMENT_NAME
-        )
+# Azure OpenAI Configuration
+AZURE_OPENAI_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
+AZURE_OPENAI_API_KEY = os.getenv('AZURE_OPENAI_API_KEY')
+AZURE_OPENAI_API_VERSION = os.getenv('AZURE_OPENAI_API_VERSION')
+AZURE_OPENAI_DEPLOYMENT_NAME = os.getenv('AZURE_OPENAI_DEPLOYMENT_NAME')
+AZURE_OPENAI_MAX_TOKENS = os.getenv('AZURE_OPENAI_MAX_TOKENS')
+
+# CosmosDB Configuration
+AZURE_COSMOSDB_ENDPOINT = os.getenv('AZURE_COSMOSDB_ENDPOINT')
+AZURE_COSMOSDB_PRIMARY_KEY = os.getenv('AZURE_COSMOSDB_PRIMARY_KEY')
+AZURE_COSMOSDB_NAME = os.getenv('AZURE_COSMOSDB_NAME')
+AZURE_COSMOSDB_SESSION_CONTAINER_NAME = os.getenv('AZURE_COSMOSDB_SESSION_CONTAINER_NAME')
+AZURE_COSMOSDB_CONVERSATION_CONTAINER_NAME = os.getenv('AZURE_COSMOSDB_CONVERSATION_CONTAINER_NAME')
+AZURE_COSMOSDB_CONNECTION_STRING = os.getenv('AZURE_COSMOSDB_CONNECTION_STRING')
+AZURE_COSMOSDB_PARTITION_KEY = os.getenv('AZURE_COSMOSDB_PARTITION_KEY')
+COSMOS_FUND_CONTAINER: str = os.getenv("COSMOS_FUND_CONTAINER", "funds")
+COSMOS_LATEST_FUND_MAPPING_CONTAINER: str = os.getenv("COSMOS_LATEST_FUND_MAPPING_CONTAINER", "latest_fund_mapping")
+
+# Application Insights Configuration
+APP_INSIGHTS_CONNECTION_STRING = os.getenv('APP_INSIGHTS_CONNECTION_STRING')
 
 
-# Create a global config instance
-config = Config()
+required_vars = [
+    'SQL_SERVER_USERNAME', 'SQL_SERVER_NAME', 'SQL_SERVER_PASSWORD', 'SQL_SERVER_DATABASE',
+    'AZURE_OPENAI_ENDPOINT', 'AZURE_OPENAI_API_KEY', 'AZURE_OPENAI_DEPLOYMENT_NAME'
+]
+
+for var in required_vars:
+    if not globals()[var]:
+        raise ValueError(f'Missing required environment variable: {var}')
