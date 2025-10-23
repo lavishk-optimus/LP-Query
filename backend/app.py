@@ -5,7 +5,7 @@ import uuid
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-# from langgraph_pipeline.agents.sql_agent import sql_agent_singleton_instance
+from langgraph_pipeline.agents.sql_agent import sql_agent_singleton_instance
 from typing import List, Optional
 from azure.cosmos import CosmosClient
 from dotenv import load_dotenv
@@ -47,31 +47,31 @@ class EmailScheduleRequest(BaseModel):
 def health_check():
     return {"status": "ok"}
 
-# @app.post("/api/query")
-# async def query_database(request: QueryRequest):
-#     """
-#     Execute a natural language query against the database
+@app.post("/api/query")
+async def query_database(request: QueryRequest):
+    """
+    Execute a natural language query against the database
     
-#     Example request:
-#         {
-#             "query": "How many users are in the system?",
-#             "user_id": "user123"
-#         }
-#     """
-#     try:
+    Example request:
+        {
+            "query": "How many users are in the system?",
+            "user_id": "user123"
+        }
+    """
+    try:
       
-#         response = await sql_agent_singleton_instance.get_response(
-#             user_query=request.query,
-#             user_id=request.user_id,
-#             modules=[]  
-#         )
+        response = await sql_agent_singleton_instance.get_response(
+            user_query=request.query,
+            user_id=request.user_id,
+            modules=[]  
+        )
         
-#         return response
-#     except Exception as e:
-#         raise HTTPException(
-#             status_code=500,
-#             detail=f"Error processing query: {str(e)}"
-#         )
+        return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing query: {str(e)}"
+        )
 
 @app.post("/alert-preferences")
 def store_alert_preferences(pref: AlertPreference):
