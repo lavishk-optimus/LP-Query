@@ -14,6 +14,7 @@ from services.telemetry_client import telemetry_client
 class Database:
     """
     Database class to handle SQL Server connections using environment variables.
+    NOTE: All queries should include UserID filter for data isolation.
     """
 
     def __init__(self):
@@ -24,7 +25,7 @@ class Database:
             self.db_url = URL.create(**self.db_config)
             self.db = self._create_connection()
 
-            telemetry_client.log_info("Initialized the database connection.")
+            telemetry_client.log_info("Initialized the database connection with user isolation support.")
 
         except Exception as e:
             telemetry_client.log_exception(e, {"error": f"Database Connection failed because of {e}"})

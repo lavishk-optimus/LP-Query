@@ -4,6 +4,7 @@ import logging
 from typing import List, Dict, Any
 import io
 from services import WordParserService, LLMService, CosmosService
+from services.sql_repository import sql_repository
 from models import Fund, FundResponseDTO
 
 
@@ -121,15 +122,25 @@ async def process_fund_document(
         logger.info("Uploading funds to Cosmos DB")
         try:
             upload_results = cosmos_service.upload_multiple_funds(funds, user_id)
-            logger.info(f"Upload completed: {upload_results['uploaded_count']} uploaded, {upload_results['skipped_count']} skipped, {upload_results['error_count']} errors")
+            logger.info(f"Cosmos DB upload completed: {upload_results['uploaded_count']} uploaded, {upload_results['skipped_count']} skipped, {upload_results['error_count']} errors")
         except Exception as e:
             logger.error(f"Error uploading funds to Cosmos DB: {str(e)}")
             raise HTTPException(
                 status_code=500, 
-                detail=f"Failed to upload funds to database: {str(e)}"
+                detail=f"Failed to upload funds to Cosmos DB: {str(e)}"
             )
         
-        # Step 7: Return results
+        # Step 7: Upload funds to SQL Database
+        logger.info("Uploading funds to SQL Database")
+        try:
+            sql_results = sql_repository.insert_multiple_funds(funds)
+            logger.info(f"SQL DB upload completed: {sql_results['inserted']} inserted, {sql_results['errors']} errors")
+        except Exception as e:
+            logger.error(f"Error uploading funds to SQL DB: {str(e)}")
+            # Don't fail the request if SQL upload fails, but log it
+            sql_results = {"total": len(funds), "inserted": 0, "errors": len(funds)}
+        
+        # Step 8: Return results
         return JSONResponse(
             status_code=200,
             content={
@@ -138,12 +149,15 @@ async def process_fund_document(
                 "user_id": user_id,
                 "text_length": len(text_content),
                 "funds_extracted": len(funds_data),
-                "upload_results": upload_results,
+                "cosmos_upload_results": upload_results,
+                "sql_upload_results": sql_results,
                 "summary": {
                     "total_funds_found": upload_results["total_funds"],
-                    "successfully_uploaded": upload_results["uploaded_count"],
-                    "skipped_existing": upload_results["skipped_count"],
-                    "errors": upload_results["error_count"]
+                    "cosmos_uploaded": upload_results["uploaded_count"],
+                    "cosmos_skipped": upload_results["skipped_count"],
+                    "cosmos_errors": upload_results["error_count"],
+                    "sql_inserted": sql_results["inserted"],
+                    "sql_errors": sql_results["errors"]
                 }
             }
         )
