@@ -13,6 +13,11 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
+# Suppress Azure SDK verbose logging
+logging.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(logging.WARNING)
+logging.getLogger('azure.core').setLevel(logging.WARNING)
+logging.getLogger('azure').setLevel(logging.WARNING)
+
 # Create FastAPI app
 app = FastAPI(
     title="LP Query Backend",

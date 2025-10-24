@@ -49,17 +49,20 @@ class SQLAgent:
 
     async def get_response(self, user_query: str, user_id: str = "default_user"):
         '''Async method to invoke the agent directly'''
-        self.telemetry_client.log_info(f'Processing query: {user_query[:50]}...')
+        self.telemetry_client.log_info(f'Processing query for user {user_id}: {user_query[:50]}...')
 
         try:
             self.system_prompt = SQL_AGENT_SYSTEM_PROMPT
             
-            formatted_query = SQL_AGENT_CONTEXT_TEMPLATE.format(user_query=user_query)
+            formatted_query = SQL_AGENT_CONTEXT_TEMPLATE.format(
+                user_id=user_id,
+                user_query=user_query
+            )
 
             human_message = HumanMessage(content = formatted_query)
             agent_messages = [SystemMessage(content = self.system_prompt), human_message]
 
-            self.telemetry_client.log_info('Invoking agent with formatted query')
+            self.telemetry_client.log_info(f'Invoking agent with formatted query for user {user_id}')
             result = await self.agent_executor.ainvoke({
                 'messages': agent_messages
             })

@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Optional
 from statistics import mean
 
 from services import CosmosService
+from services.sql_repository import sql_repository
 from models import FundResponseDTO
 
 
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 # Create router
 router = APIRouter(prefix="/fund-data", tags=["Fund Data"])
 
-# Service instance
+# Service instances
 cosmos_service = CosmosService()
 
 
@@ -233,6 +234,76 @@ async def get_all_funds(user_id: str) -> JSONResponse:
         raise HTTPException(
             status_code=500, 
             detail=f"Failed to retrieve all funds: {str(e)}"
+        )
+
+
+@router.get("/user/sql/latest")
+async def get_latest_funds_from_sql(user_id: str) -> JSONResponse:
+    """
+    Get latest fund data for a specific user from SQL Database
+    
+    Args:
+        user_id: ID of the user
+        
+    Returns:
+        JSONResponse with user's latest fund data from SQL
+    """
+    try:
+        logger.info(f"Retrieving latest funds from SQL for user: {user_id}")
+        
+        funds_data = sql_repository.get_user_latest_funds(user_id)
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "user_id": user_id,
+                "data_source": "sql",
+                "data_type": "latest",
+                "funds_count": len(funds_data),
+                "funds": funds_data
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error retrieving latest funds from SQL for user {user_id}: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to retrieve latest funds from SQL: {str(e)}"
+        )
+
+
+@router.get("/user/sql/all")
+async def get_all_funds_from_sql(user_id: str) -> JSONResponse:
+    """
+    Get all fund data for a specific user from SQL Database
+    
+    Args:
+        user_id: ID of the user
+        
+    Returns:
+        JSONResponse with all user's fund data from SQL
+    """
+    try:
+        logger.info(f"Retrieving all funds from SQL for user: {user_id}")
+        
+        funds_data = sql_repository.get_user_funds(user_id)
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "user_id": user_id,
+                "data_source": "sql",
+                "data_type": "all",
+                "funds_count": len(funds_data),
+                "funds": funds_data
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error retrieving all funds from SQL for user {user_id}: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to retrieve all funds from SQL: {str(e)}"
         )
 
 
